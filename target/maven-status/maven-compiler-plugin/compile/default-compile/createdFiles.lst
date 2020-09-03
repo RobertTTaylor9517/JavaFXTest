@@ -1,3 +1,6 @@
-org/openjfx/hellofx/MainController.class
+org/openjfx/hellofx/entities/Memo.class
 module-info.class
 org/openjfx/hellofx/HelloWorld.class
+org/openjfx/hellofx/MainController.class
+org/openjfx/hellofx/ListController.class
+org/openjfx/hellofx/DbConnection.class
