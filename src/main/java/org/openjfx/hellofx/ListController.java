@@ -47,6 +47,10 @@ public class ListController implements Initializable {
 	
 	@FXML
 	private void getMemos() {
+		data.clear();
+		memoList.getItems().clear();
+		labelAnchor.getChildren().clear();
+		
 		Connection conn = dc.Connect();
 //		data = FXCollections.observableArrayList();
 		
@@ -55,7 +59,7 @@ public class ListController implements Initializable {
 		try {
 			ResultSet res = conn.createStatement().executeQuery("SELECT * FROM memos");
 			while(res.next()) {
-				data.add(new Memo(res.getString(2), res.getString(3)));
+				data.add(new Memo(res.getInt(1), res.getString(2), res.getString(3)));
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -122,16 +126,50 @@ public class ListController implements Initializable {
 			conn.commit();
 //			conn.close();
 			
-			this.getMemos();
+//			this.getMemos();
+			
+//			data.add(new Memo(id, name, message));
+			
+			
 			stage.close();
+			getMemos();
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
 	@FXML
-	private void closeAddMemo() {
+	private void closeAddMemo(ActionEvent ev) {
+		final Node source = (Node) ev.getSource();
+		final Stage stage = (Stage) source.getScene().getWindow();
+		
 		stage.close();
+	}
+	
+	@FXML
+	private void deleteMemo(ActionEvent ev) {
+		int index;
+		int id;
+		
+		index = memoList.getSelectionModel().getSelectedIndex();
+		id = data.get(index).getId();
+		
+		Connection conn = dc.Connect();
+		
+		try {
+			conn.setAutoCommit(false);
+			Statement stmt = conn.createStatement();
+			String sql = "DELETE from memos where id = " + id + ";";
+			
+			stmt.executeUpdate(sql);
+			stmt.close();
+			conn.commit();
+			
+			getMemos();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }
