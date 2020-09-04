@@ -1,36 +1,54 @@
 package org.openjfx.hellofx;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ResourceBundle;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.openjfx.hellofx.entities.Memo;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
+import javafx.stage.Stage;
 
 public class ListController implements Initializable {
 	
-	@FXML private ListView<String> memoList;
+	@FXML private ListView<String> memoList = new ListView<String>();
+	@FXML private AnchorPane labelAnchor = new AnchorPane();
+	@FXML private TextField nameField;
+	@FXML private TextArea messageField;
 	
-	private ObservableList<Memo> data;
+	private ObservableList<Memo> data = FXCollections.observableArrayList();
 	private DbConnection dc;
+	private Stage stage = new Stage();
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		dc = new DbConnection();
+		getMemos();
 		
 	}
 	
 	@FXML
 	private void getMemos() {
 		Connection conn = dc.Connect();
-		data = FXCollections.observableArrayList();
+//		data = FXCollections.observableArrayList();
 		
 		// Execute query and store info
 		
@@ -53,6 +71,67 @@ public class ListController implements Initializable {
 				memoList.getItems().add(data.get(i).getName());
 			}
 		}
+		
+		Label label = new Label();
+		
+		memoList.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends String> ov, String old_val, String new_val) -> {
+			int index = memoList.getSelectionModel().getSelectedIndex();
+			label.setText(data.get(index).getMessage());
+		});
+		
+		
+		labelAnchor.getChildren().add(label);
+	}
+	
+	@FXML
+	private void openAddMemo() {
+		try {
+			FXMLLoader fxmlLoader = new FXMLLoader();
+			fxmlLoader.setLocation(getClass().getResource("AddMemo.fxml"));
+			
+			Scene scene = new Scene(fxmlLoader.load());
+//			Stage stage = new Stage();
+			
+			stage.setScene(scene);
+			stage.show();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@FXML
+	private void addMemo(ActionEvent ev) {
+		String name = "'" + nameField.getText() + "'";
+		String message = "'" + messageField.getText() + "'";
+		int id = ThreadLocalRandom.current().nextInt();
+		
+		final Node source = (Node) ev.getSource();
+		final Stage stage = (Stage) source.getScene().getWindow();
+		
+		System.out.println(name + message);
+		
+		Connection conn = dc.Connect();
+		
+		try {
+			conn.setAutoCommit(false);
+			Statement stmt = conn.createStatement();
+			String sql = "INSERT INTO memos (id, name, message) VALUES (" + id + ", " + name + ", " + message + ");";
+			
+			stmt.executeUpdate(sql);
+			stmt.close();
+			conn.commit();
+//			conn.close();
+			
+			this.getMemos();
+			stage.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@FXML
+	private void closeAddMemo() {
+		stage.close();
 	}
 
 }
